@@ -18,30 +18,29 @@ if "context" not in st.session_state:
 with st.sidebar:
     st.header("Session Options")
 
-    if st.button("ℹ️ General Health Info"):
-        with st.spinner("Thinking..."):
+    # Use consistent width for all buttons using container and layout
+    col1 = st.container()
+    with col1:
+        if st.button("ℹ️ General Health Info", use_container_width=True):
             response, updated_context = call_llm("Can you provide some general health information?", st.session_state.context)
             st.session_state.context = updated_context
-        st.rerun()
+            st.rerun()
 
-    
-    if st.button("📅 Schedule Appointment"):
-        with st.spinner("Thinking..."):
+        if st.button("📅 Schedule Appointment", use_container_width=True):
             response, updated_context = call_llm("I'd like to schedule an appointment", st.session_state.context)
             st.session_state.context = updated_context
-        st.rerun()
+            st.rerun()
 
-    if st.button("📋 View My Appointments"):
-        with st.spinner("Thinking..."):
+        if st.button("📋 View My Appointments", use_container_width=True):
             response, updated_context = call_llm("Show me my scheduled appointments", st.session_state.context)
             st.session_state.context = updated_context
-        st.rerun()
+            st.rerun()
 
-    if st.button("🧹 Clear Conversation"):
-        st.session_state.context = clear_context(st.session_state.context)
-        st.success("Conversation cleared!")
-        st.rerun()
-    
+        if st.button("🧹 Clear Conversation", use_container_width=True):
+            st.session_state.context = clear_context(st.session_state.context)
+            st.success("Conversation cleared!")
+            st.rerun()
+
 
 # Main chat interface
 st.markdown("### Chat with your Medical Assistant")
