@@ -1,0 +1,10 @@
+{
+  "admin": {
+    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "name": "Administrator"
+  },
+  "iara": {
+    "password": "38ca87413835fbf3122c4b48b30368bfa0792c08cef9f95405726b7588274674",
+    "name": "Iara"
+  }
+}

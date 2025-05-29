@@ -1,0 +1,15 @@
+{
+  "admin": {
+    "password_hash": "ddb50c3e0a19a86082aeb5fe8d93f619525bf7521fab82b482ef8dfce708582a",
+    "salt": "6589cadf25b5ad7b27067a9a6b1afaf181b1da5c3956cd11e580493f90d89939",
+    "full_name": "Administrator",
+    "roles": [
+      "admin",
+      "user"
+    ],
+    "created_at": "2025-05-29T13:55:12.136413",
+    "login_attempts": 0,
+    "locked_until": null,
+    "last_login": "2025-05-29T13:58:35.696173"
+  }
+}
