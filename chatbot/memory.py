@@ -33,13 +33,14 @@ def clear_context(context: Dict) -> Dict:
     new_context['user_preferences'] = context.get('user_preferences', {})
     return new_context
 
-def save_context_to_file(context: Dict, filename: str = None) -> str:
+def save_context_to_file(context: Dict, filename: str = None, username: str = None) -> str:
     """Save context to JSON file"""
     import json
     
     if not filename:
         session_id = context.get('session_id', 'unknown')
-        filename = f"medical_session_{session_id}.json"
+        safe_username = username or "anonymous"
+        filename = f"{safe_username}_session_{session_id}.json"
     
     try:
         # Prepare data for JSON serialization

@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from chatbot.conversation import call_llm
 from chatbot.memory import init_context, get_conversation_summary, clear_context, save_context_to_file
+from chatbot.orchestrator import orchestrated_llm_call
 
 # Page configuration - MUST be first Streamlit command
 st.set_page_config(
@@ -239,17 +240,20 @@ def main_app():
         col1 = st.container()
         with col1:
             if st.button("ℹ️ General Health Info", use_container_width=True):
-                response, updated_context = call_llm("Can you provide some general health information?", st.session_state.context)
+                # response, updated_context = call_llm("Can you provide some general health information?", st.session_state.context)
+                response, updated_context = orchestrated_llm_call("Can you provide some general health information?", st.session_state.context)
                 st.session_state.context = updated_context
                 st.rerun()
 
             if st.button("📅 Schedule Appointment", use_container_width=True):
-                response, updated_context = call_llm("I'd like to schedule an appointment", st.session_state.context)
+                # response, updated_context = call_llm("I'd like to schedule an appointment", st.session_state.context)
+                response, updated_context = orchestrated_llm_call("I'd like to schedule an appointment", st.session_state.context)
                 st.session_state.context = updated_context
                 st.rerun()
 
             if st.button("📋 View My Appointments", use_container_width=True):
-                response, updated_context = call_llm("Show me my scheduled appointments", st.session_state.context)
+                # response, updated_context = call_llm("Show me my scheduled appointments", st.session_state.context)
+                response, updated_context = orchestrated_llm_call("Show me my scheduled appointments", st.session_state.context)
                 st.session_state.context = updated_context
                 st.rerun()
 
@@ -270,6 +274,14 @@ def main_app():
                 if st.button("📊 View Users", use_container_width=True):
                     st.session_state.show_users = True
                     st.rerun()
+            
+            if os.path.exists("logs/orchestration.log"):
+                with open("logs/orchestration.log", "r") as log_file:
+                    logs = log_file.readlines()[-10:]  # last 10 log lines
+                    st.markdown("### 🛠️ System Logs")
+                    for line in logs:
+                        st.text(line.strip())
+
 
     # Handle admin panel display
     if st.session_state.get("show_admin"):
@@ -315,7 +327,8 @@ def main_app():
     if send_button and user_input:
         with st.spinner("Thinking..."):
             try:
-                response, updated_context = call_llm(user_input, st.session_state.context)
+                # response, updated_context = call_llm(user_input, st.session_state.context)
+                response, updated_context = orchestrated_llm_call(user_input, st.session_state.context)
                 st.session_state.context = updated_context
             except Exception as e:
                 st.error(f"Error processing your request: {e}")

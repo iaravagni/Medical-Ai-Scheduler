@@ -71,11 +71,41 @@ AWS_REGION=your_aws_region
 BEDROCK_MODEL_ID=anthropic.claude-v2 # or your preferred model
 ```
 
+## Orchestration
+
+- **LLM Orchestration Function**
+  - A robust `orchestrated_llm_call()` pipeline was implemented with logging, error handling, retry logic (via `tenacity`), and context saving.
+
+- **Logging**
+  - Logs are stored in a dedicated `/logs/orchestration.log` file with timestamps and clear labels for:
+    - Pipeline start
+    - LLM call attempts
+    - Success or failure messages
+    - Context save status
+    - Total runtime
+
+- **Context Management**
+  - User conversation history, session details, and preferences are stored in a JSON file after every interaction (e.g., `medical_session_<timestamp>.json`).
+  - This supports session continuity and reproducibility.
+
+- **Error Handling**
+  - Wrapped the LLM call in a retry mechanism (`tenacity`) to handle transient failures.
+  - Logged meaningful error messages for easier debugging.
+
+## Enterprise Integration
+
+To support real-world enterprise needs, the Medical-AI-Scheduler has been extended with components that ensure security, scalability, and operational transparency. A secure chat interface allows authenticated users to interact with the AI scheduling assistant while maintaining individual session context. Each session is tracked with a unique identifier, and user data is stored securely.
+
+All interactions—such as user queries and AI responses—are logged to dedicated audit logs, enabling traceability and compliance with institutional standards. Additionally, orchestration performance metrics such as execution time and error reporting are captured in a separate log to support performance analysis and system monitoring.
+
+The system is modular and deployment-ready. Environment-based configuration and clear separation between logic and orchestration make it easy to launch and maintain. A deployment guide is included as part of the project documentation to assist with setup and integration into existing infrastructures. Security documentation outlines the basic authentication mechanism and logging safeguards in place.
+
+
 ## Technology Stack
 - Backend: Python, Flask/Django
 - Database: PostgreSQL
 - AI/ML: Amazon Bedrock, TensorFlow/PyTorch
-- Frontend: React.js
+- Frontend: Streamlit
 - Authentication: JWT
 
 ## Contributing
