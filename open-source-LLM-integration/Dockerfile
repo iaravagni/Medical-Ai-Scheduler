@@ -7,7 +7,7 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV AWS_DEFAULT_REGION=us-east-1
+ENV AWS_DEFAULT_REGION=us-east-2
 
 # Install system dependencies (removed curl since health check won't work in App Runner)
 RUN apt-get update && \
