@@ -15,7 +15,7 @@ Medical-AI-Scheduler is an intelligent appointment scheduling system designed fo
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Medical-Ai-Scheduler.git
+git clone https://github.com/iaravagni/Medical-Ai-Scheduler.git
 
 # Navigate to the project directory
 cd Medical-Ai-Scheduler
