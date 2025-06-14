@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 PORT = int(os.environ.get('PORT', 8080))
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+AWS_REGION = os.environ.get('AWS_REGION', 'us-east-2')
 
 # Initialize Bedrock client with better error handling
 bedrock = None
