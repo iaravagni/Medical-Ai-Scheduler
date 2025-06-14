@@ -1,4 +1,4 @@
-# AWS Bedrock optimized Dockerfile for App Runner
+# AWS App Runner optimized Dockerfile
 FROM python:3.11-slim
 
 # Set working directory
@@ -9,11 +9,10 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV AWS_DEFAULT_REGION=us-east-1
 
-# Install system dependencies
+# Install system dependencies (removed curl since health check won't work in App Runner)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
-        curl \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -42,9 +41,8 @@ USER appuser
 # Expose port (App Runner expects 8080 by default)
 EXPOSE 8080
 
-# Health check - modified for Bedrock
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Remove HEALTHCHECK - App Runner handles this differently
+# App Runner will monitor your service through HTTP requests to your endpoints
 
 # Run the application
 CMD ["python", "llm_api.py"]
