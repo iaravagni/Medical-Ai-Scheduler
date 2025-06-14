@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
-import boto3
-import json
 import os
 import logging
-from botocore.exceptions import ClientError, BotoCoreError
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+import torch
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,47 +11,57 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 PORT = int(os.environ.get('PORT', 8080))
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-2')
 
-# Initialize Bedrock client with better error handling
-bedrock = None
-bedrock_error = None
+# Global variables for model
+text_generator = None
+model_name = "microsoft/DialoGPT-small"  # Small, fast conversational model
 
-try:
-    # Create session first to handle credentials better
-    session = boto3.Session()
-    bedrock = session.client('bedrock-runtime', region_name=AWS_REGION)
-    logger.info(f"Bedrock client initialized successfully in region {AWS_REGION}")
-except Exception as e:
-    bedrock_error = str(e)
-    logger.error(f"Failed to initialize Bedrock client: {e}")
+def load_model():
+    """Load the language model on startup"""
+    global text_generator
+    try:
+        logger.info(f"Loading model: {model_name}")
+        
+        # Use a simple text generation pipeline
+        text_generator = pipeline(
+            "text-generation",
+            model=model_name,
+            tokenizer=model_name,
+            device=-1,  # CPU only (more reliable for deployment)
+            max_length=100,
+            do_sample=True,
+            temperature=0.7,
+            pad_token_id=50256
+        )
+        
+        logger.info("Model loaded successfully!")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        return False
+
+# Load model on startup
+model_loaded = load_model()
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for App Runner monitoring"""
-    health_status = {
-        "status": "healthy" if bedrock else "degraded",
-        "service": "LLM API",
-        "bedrock_available": bedrock is not None,
-        "region": AWS_REGION,
-        "port": PORT
-    }
-    
-    if bedrock_error:
-        health_status["bedrock_error"] = bedrock_error
-    
-    status_code = 200 if bedrock else 503
-    return jsonify(health_status), status_code
+    """Health check endpoint"""
+    return jsonify({
+        "status": "healthy" if model_loaded else "degraded",
+        "service": "Local LLM API",
+        "model": model_name,
+        "model_loaded": model_loaded
+    }), 200 if model_loaded else 503
 
 @app.route('/', methods=['GET'])
 def home():
     """Root endpoint with service information"""
     return jsonify({
-        "message": "LLM API is running",
-        "model": "AWS Bedrock Claude",
-        "provider": "AWS Bedrock",
-        "region": AWS_REGION,
-        "bedrock_available": bedrock is not None,
+        "message": "Local LLM API is running",
+        "model": model_name,
+        "provider": "Hugging Face Transformers",
+        "model_loaded": model_loaded,
         "endpoints": {
             "chat": "/chat (POST)",
             "health": "/health (GET)",
@@ -64,7 +73,13 @@ def home():
 def chat():
     """Chat endpoint for LLM interactions"""
     try:
-        # Validate request content type
+        if not model_loaded or not text_generator:
+            return jsonify({
+                "error": "Model not available",
+                "details": "Language model failed to load"
+            }), 503
+        
+        # Validate request
         if not request.is_json:
             return jsonify({"error": "Content-Type must be application/json"}), 400
         
@@ -76,97 +91,79 @@ def chat():
         if not prompt:
             return jsonify({"error": "Missing 'prompt' field in request"}), 400
         
-        if not bedrock:
-            return jsonify({
-                "error": "AWS Bedrock client not available",
-                "details": bedrock_error
-            }), 503
+        # Get optional parameters
+        max_length = min(data.get("max_length", 50), 200)  # Cap at 200 for performance
+        temperature = max(0.1, min(data.get("temperature", 0.7), 1.0))  # Between 0.1 and 1.0
         
-        # Using Claude 3 Haiku (fastest and cheapest)
-        model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+        logger.info(f"Processing prompt: {prompt[:50]}...")
         
-        # Prepare the request for Claude
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": data.get("max_tokens", 1000),
-            "temperature": data.get("temperature", 0.7),
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        }
-        
-        logger.info(f"Invoking Bedrock model {model_id}")
-        
-        response = bedrock.invoke_model(
-            modelId=model_id,
-            body=json.dumps(body),
-            contentType='application/json'
-        )
-        
-        response_body = json.loads(response['body'].read())
-        logger.info("Received response from Bedrock")
-        
-        if 'content' in response_body and len(response_body['content']) > 0:
-            content = response_body['content'][0]['text']
-            return jsonify({
-                "response": content,
-                "model": model_id,
-                "usage": response_body.get('usage', {})
-            })
-        else:
-            logger.error("No content in Bedrock response")
-            return jsonify({"error": "No response content from Bedrock"}), 500
+        # Generate response
+        try:
+            responses = text_generator(
+                prompt,
+                max_length=max_length,
+                temperature=temperature,
+                num_return_sequences=1,
+                truncation=True
+            )
             
-    except ClientError as e:
-        error_code = e.response['Error']['Code']
-        error_message = e.response['Error']['Message']
-        logger.error(f"AWS ClientError: {error_code} - {error_message}")
-        
-        if error_code == 'AccessDeniedException':
+            if responses and len(responses) > 0:
+                generated_text = responses[0]['generated_text']
+                
+                # Clean up the response (remove the original prompt)
+                if generated_text.startswith(prompt):
+                    response_text = generated_text[len(prompt):].strip()
+                else:
+                    response_text = generated_text.strip()
+                
+                # If response is empty, provide a fallback
+                if not response_text:
+                    response_text = "I understand your message. Could you please be more specific about what you'd like to discuss?"
+                
+                return jsonify({
+                    "response": response_text,
+                    "model": model_name,
+                    "parameters": {
+                        "max_length": max_length,
+                        "temperature": temperature
+                    }
+                })
+            else:
+                return jsonify({"error": "No response generated"}), 500
+                
+        except Exception as model_error:
+            logger.error(f"Model generation error: {str(model_error)}")
             return jsonify({
-                "error": "Access denied to Bedrock service",
-                "details": "Check IAM permissions for Bedrock model access"
-            }), 403
-        elif error_code == 'ValidationException':
-            return jsonify({
-                "error": "Invalid request parameters",
-                "details": error_message
-            }), 400
-        else:
-            return jsonify({
-                "error": f"AWS service error: {error_code}",
-                "details": error_message
+                "error": "Model generation failed",
+                "details": str(model_error)
             }), 500
             
-    except BotoCoreError as e:
-        logger.error(f"BotoCore error: {str(e)}")
-        return jsonify({
-            "error": "AWS connection error",
-            "details": str(e)
-        }), 500
-        
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {str(e)}")
-        return jsonify({
-            "error": "Invalid response from Bedrock",
-            "details": "Failed to parse response JSON"
-        }), 500
-        
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"Chat endpoint error: {str(e)}")
         return jsonify({
             "error": "Internal server error",
             "details": str(e)
         }), 500
 
+@app.route('/models', methods=['GET'])
+def list_models():
+    """List available model information"""
+    return jsonify({
+        "current_model": model_name,
+        "model_info": {
+            "name": "DialoGPT-small",
+            "description": "Small conversational AI model by Microsoft",
+            "size": "Small (~117MB)",
+            "good_for": ["Conversations", "Q&A", "Simple chat"]
+        },
+        "status": "loaded" if model_loaded else "failed"
+    })
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
         "error": "Endpoint not found",
-        "available_endpoints": ["/", "/health", "/chat"]
+        "available_endpoints": ["/", "/health", "/chat", "/models"]
     }), 404
 
 @app.errorhandler(405)
@@ -178,12 +175,7 @@ def method_not_allowed(error):
 
 if __name__ == '__main__':
     logger.info(f"Starting Flask app on port {PORT}")
-    logger.info(f"AWS Region: {AWS_REGION}")
-    logger.info(f"Bedrock available: {bedrock is not None}")
+    logger.info(f"Model loaded: {model_loaded}")
+    logger.info(f"Using model: {model_name}")
     
-    # Use Gunicorn in production, Flask dev server for local testing
-    if os.environ.get('FLASK_ENV') == 'development':
-        app.run(host='0.0.0.0', port=PORT, debug=True)
-    else:
-        # For production, we'll use Gunicorn
-        app.run(host='0.0.0.0', port=PORT, debug=False)
+    app.run(host='0.0.0.0', port=PORT, debug=False)

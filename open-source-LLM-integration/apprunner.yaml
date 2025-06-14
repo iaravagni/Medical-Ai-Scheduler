@@ -3,11 +3,11 @@ runtime: docker
 build:
   commands:
     build:
-      - echo "Building Docker image for AWS Bedrock integration..."
-      - docker build -t bedrock-llm-api .
+      - echo "Building simple LLM API..."
+      - docker build -t simple-llm-api .
 run:
   runtime-version: latest
-  command: python llm_api.py
+  command: gunicorn --bind 0.0.0.0:8080 --workers 1 --timeout 300 --preload simple_llm_api:app
   network:
     port: 8080
     env: PORT
@@ -15,8 +15,6 @@ run:
     - name: PORT
       value: "8080"
     - name: PYTHONUNBUFFERED
-      value: "2"
-    - name: AWS_DEFAULT_REGION
-      value: "us-east-2"
-    - name: AWS_REGION
-      value: "us-east-2"
+      value: "1"
+    - name: TRANSFORMERS_CACHE
+      value: "/app/model_cache"
