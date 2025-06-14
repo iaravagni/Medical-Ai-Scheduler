@@ -1,9 +1,40 @@
 from flask import Flask, request, jsonify
-import requests
+import boto3
 import json
+import os
 
 app = Flask(__name__)
-OLLAMA_API_URL = "http://localhost:11434/api/chat"
+
+PORT = int(os.environ.get('PORT', 8080))
+AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+
+# Initialize Bedrock client
+try:
+    bedrock = boto3.client('bedrock-runtime', region_name=AWS_REGION)
+except Exception as e:
+    print(f"Failed to initialize Bedrock client: {e}")
+    bedrock = None
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy", 
+        "service": "LLM API",
+        "bedrock_available": bedrock is not None
+    }), 200
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        "message": "LLM API is running",
+        "model": "AWS Bedrock Claude",
+        "provider": "AWS Bedrock",
+        "region": AWS_REGION,
+        "endpoints": {
+            "chat": "/chat",
+            "health": "/health"
+        }
+    })
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -13,41 +44,44 @@ def chat():
     if not prompt:
         return jsonify({"error": "Missing prompt"}), 400
     
-    payload = {
-        "model": "llama3",  # or "mistral"
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": True
-    }
+    if not bedrock:
+        return jsonify({"error": "AWS Bedrock client not available"}), 500
+    
+    # Using Claude 3 Haiku (fastest and cheapest)
+    model_id = "anthropic.claude-3-haiku-20240307-v1:0"
     
     try:
-        response = requests.post(OLLAMA_API_URL, json=payload, stream=True)
-        response.raise_for_status()
+        # Prepare the request for Claude
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 1000,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        }
         
-        full_response = ""
-        for line in response.iter_lines():
-            if line:
-                line_str = line.decode("utf-8").strip()
-                if line_str:  # Skip empty lines
-                    try:
-                        chunk = json.loads(line_str)
-                        if "message" in chunk and "content" in chunk["message"]:
-                            content = chunk["message"]["content"]
-                            full_response += content
-                        
-                        # Check if this is the final chunk
-                        if chunk.get("done", False):
-                            break
-                            
-                    except json.JSONDecodeError as e:
-                        print(f"Skipping invalid JSON chunk: {line_str[:100]}... Error: {e}")
-                        continue
+        response = bedrock.invoke_model(
+            modelId=model_id,
+            body=json.dumps(body),
+            contentType='application/json'
+        )
         
-        return jsonify({"response": full_response})
+        response_body = json.loads(response['body'].read())
         
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Request failed: {str(e)}"}), 500
+        if 'content' in response_body and len(response_body['content']) > 0:
+            content = response_body['content'][0]['text']
+            return jsonify({"response": content})
+        else:
+            return jsonify({"error": "No response from Bedrock"}), 500
+            
     except Exception as e:
-        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+        return jsonify({"error": f"Bedrock request failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    print(f"Starting Flask app on port {PORT}")
+    print(f"AWS Region: {AWS_REGION}")
+    print(f"Bedrock available: {bedrock is not None}")
+    app.run(host='0.0.0.0', port=PORT, debug=False)

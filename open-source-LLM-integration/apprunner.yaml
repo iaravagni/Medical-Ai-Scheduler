@@ -1,0 +1,22 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "Building Docker image for AWS Bedrock integration..."
+      - docker build -t bedrock-llm-api .
+run:
+  runtime-version: latest
+  command: python llm_api.py
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: PORT
+      value: "8080"
+    - name: PYTHONUNBUFFERED
+      value: "1"
+    - name: AWS_DEFAULT_REGION
+      value: "us-east-2"
+    - name: AWS_REGION
+      value: "us-east-2"

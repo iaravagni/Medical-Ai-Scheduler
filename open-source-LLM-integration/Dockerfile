@@ -1,20 +1,30 @@
+# AWS Bedrock optimized Dockerfile for App Runner
 FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-# Update system packages and install ca-certificates
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV AWS_DEFAULT_REGION=us-east-1
+
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y ca-certificates curl && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Update pip and setuptools first
-RUN pip install --upgrade pip setuptools
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python packages with trusted hosts (fallback for SSL issues)
+# Install Python dependencies
 RUN pip install --no-cache-dir \
     --trusted-host pypi.org \
     --trusted-host pypi.python.org \
@@ -24,8 +34,17 @@ RUN pip install --no-cache-dir \
 # Copy application code
 COPY . .
 
-# Expose the port your app runs on
-EXPOSE 5001
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Expose port (App Runner expects 8080 by default)
+EXPOSE 8080
+
+# Health check - modified for Bedrock
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Run the application
-CMD ["python3", "llm_api.py"]
+CMD ["python", "llm_api.py"]
