@@ -1,3 +1,4 @@
 2025-05-29 13:58:35,699 - INFO - {"timestamp": "2025-05-29T13:58:35.698734", "user_id": "admin", "session_id": "a70df7ed-019a-4405-bc86-bf09b190525f", "action": "login_attempt", "details": {"username": "admin"}, "ip_address": "127.0.0.1", "success": true}
 2025-05-29 13:59:26,597 - INFO - {"timestamp": "2025-05-29T13:59:26.597596", "user_id": "admin", "session_id": "64501103-f0ee-4551-9411-bdd72df3a413", "action": "general_health_query", "details": {"query_type": "general_info"}, "ip_address": "127.0.0.1", "success": true}
 2025-05-29 14:00:04,454 - INFO - {"timestamp": "2025-05-29T14:00:04.453903", "user_id": "admin", "session_id": "64501103-f0ee-4551-9411-bdd72df3a413", "action": "chat_interaction", "details": {"query_length": 4, "response_length": 30}, "ip_address": "127.0.0.1", "success": true}
+2025-06-20 19:32:54.371467 - LOGIN - admin

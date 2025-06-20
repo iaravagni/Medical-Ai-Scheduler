@@ -4,3 +4,4 @@
 2025-06-06 15:19:08,898 - INFO - LLM call completed successfully
 2025-06-06 15:19:08,900 - INFO - Context saved: Session saved to medical_session_session_20250606_151248.json
 2025-06-06 15:19:08,901 - INFO - Orchestration finished in 0.58 seconds
+2025-06-20 19:32:38,744 - INFO - Logging initialized.

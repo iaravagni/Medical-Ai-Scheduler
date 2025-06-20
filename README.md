@@ -100,13 +100,27 @@ All interactions—such as user queries and AI responses—are logged to dedicat
 
 The system is modular and deployment-ready. Environment-based configuration and clear separation between logic and orchestration make it easy to launch and maintain. A deployment guide is included as part of the project documentation to assist with setup and integration into existing infrastructures. Security documentation outlines the basic authentication mechanism and logging safeguards in place.
 
+## Security Architecture: Medical Appointment Chatbot
 
-## Technology Stack
-- Backend: Python, Flask/Django
-- Database: PostgreSQL
-- AI/ML: Amazon Bedrock, TensorFlow/PyTorch
-- Frontend: Streamlit
-- Authentication: JWT
+### #Authentication
+- Users authenticate via username/password (hashed with SHA-256).
+- Session management includes 30-min timeout and role-based access.
+
+### Encryption
+- User data (`users.json`) is encrypted using AES with Fernet.
+- Secrets stored securely in `secret.key`.
+
+### Privacy Controls
+- Users must provide explicit consent before interacting with the chatbot.
+- Option to delete stored conversation data.
+
+### Audit System
+- Logs stored in `logs/audit.log` include login events and user actions.
+- LLM request logs saved in `logs/orchestration.log`.
+
+### Admin Controls
+- Admins can create/delete users and view logs.
+
 
 ## Contributing
 1. Fork the repository
@@ -119,4 +133,4 @@ The system is modular and deployment-ready. Environment-based configuration and 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
-Project Link: [https://github.com/yourusername/Medical-Ai-Scheduler](https://github.com/yourusername/Medical-Ai-Scheduler)
+Project Link: [https://github.com/iaravagni/Medical-Ai-Scheduler](https://github.com/iaravagni/Medical-Ai-Scheduler)
