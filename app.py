@@ -141,6 +141,7 @@ def main_app():
 
     if "context" not in st.session_state:
         st.session_state.context = init_context()
+        st.session_state.context["username"] = st.session_state.username  # Inject username for booking
 
     with st.sidebar:
         st.header(f"**Welcome, {st.session_state.user_name}!**")
@@ -166,11 +167,14 @@ def main_app():
             st.rerun()
 
         if st.button("📋 View My Appointments"):
-            with open("logs/audit.log", "a") as log:
-                log.write(f"{datetime.now()} - ACTION - {st.session_state.username} viewed appointments\n")
-            response, updated_context = orchestrated_llm_call("Show me my scheduled appointments", st.session_state.context)
-            st.session_state.context = updated_context
-            st.rerun()
+            from calendar_utils import list_user_appointments
+            appointments = list_user_appointments(st.session_state.username)
+            st.markdown("### 📖 Your Appointments")
+            if appointments:
+                for appt in appointments:
+                    st.write(f"📅 {appt}")
+            else:
+                st.info("You don’t have any appointments yet.")
 
         if st.button("🧹 Clear Conversation"):
             st.session_state.context = clear_context(st.session_state.context)
@@ -195,7 +199,12 @@ def main_app():
 
     col1, col2 = st.columns([4, 1])
     with col1:
-        user_input = st.text_input("Ask me something:", placeholder="e.g., 'Schedule an appointment for tomorrow at 3PM'", key="user_input_field", value="" if st.session_state.message_sent else st.session_state.get("user_input_field", ""))
+        user_input = st.text_input(
+            "Ask me something:",
+            placeholder="e.g., 'Schedule an appointment for June 25 at 2:00 PM'",
+            key="user_input_field",
+            value="" if st.session_state.message_sent else st.session_state.get("user_input_field", "")
+        )
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         send_button = st.button("Send", type="primary")

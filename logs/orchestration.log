@@ -5,3 +5,30 @@
 2025-06-06 15:19:08,900 - INFO - Context saved: Session saved to medical_session_session_20250606_151248.json
 2025-06-06 15:19:08,901 - INFO - Orchestration finished in 0.58 seconds
 2025-06-20 19:32:38,744 - INFO - Logging initialized.
+2025-06-23 13:49:54,348 - INFO - Logging initialized.
+2025-06-23 13:54:01,030 - INFO - START orchestration pipeline
+2025-06-23 13:54:01,032 - INFO - Calling LLM with user input: Hi i need to schedule an appointment at 3pm next tuesday
+2025-06-23 13:54:01,901 - INFO - LLM call completed successfully
+2025-06-23 13:54:01,904 - INFO - Context saved: Session saved to medical_session_session_20250623_135338.json
+2025-06-23 13:54:01,904 - INFO - Orchestration finished in 0.87 seconds
+2025-06-23 13:54:14,347 - INFO - START orchestration pipeline
+2025-06-23 13:54:14,348 - INFO - Calling LLM with user input: yes
+2025-06-23 13:54:15,548 - INFO - LLM call completed successfully
+2025-06-23 13:54:15,550 - INFO - Context saved: Session saved to medical_session_session_20250623_135338.json
+2025-06-23 13:54:15,550 - INFO - Orchestration finished in 1.20 seconds
+2025-06-23 14:14:33,372 - INFO - START orchestration pipeline
+2025-06-23 14:14:33,373 - INFO - Calling LLM with user input: Hi i need to schedule an appointment at 3pm next tuesday
+2025-06-23 14:14:34,675 - INFO - LLM call completed successfully
+2025-06-23 14:14:34,678 - INFO - Context saved: Session saved to medical_session_session_20250623_135338.json
+2025-06-23 14:14:34,678 - INFO - Orchestration finished in 1.31 seconds
+2025-06-23 14:27:47,331 - INFO - Logging initialized.
+2025-06-23 14:28:22,433 - INFO - START orchestration pipeline
+2025-06-23 14:28:22,434 - INFO - Calling LLM with user input: Hi i need to schedule an appointment at 3pm august 23rd 2025
+2025-06-23 14:28:23,540 - INFO - LLM call completed successfully
+2025-06-23 14:28:23,542 - INFO - Context saved: Session saved to medical_session_session_20250623_135338.json
+2025-06-23 14:28:23,542 - INFO - Orchestration finished in 1.11 seconds
+2025-06-23 14:28:52,289 - INFO - START orchestration pipeline
+2025-06-23 14:28:52,290 - INFO - Calling LLM with user input: Hi i need to schedule an appointment at 3pm august 23rd 2025
+2025-06-23 14:28:53,728 - INFO - LLM call completed successfully
+2025-06-23 14:28:53,729 - INFO - Context saved: Session saved to medical_session_session_20250623_135338.json
+2025-06-23 14:28:53,729 - INFO - Orchestration finished in 1.44 seconds

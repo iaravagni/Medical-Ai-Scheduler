@@ -4,6 +4,8 @@ import logging
 from typing import Dict, List, Tuple
 from dotenv import load_dotenv
 import os
+import re
+from chatbot.calendar_utils import book_slot
 
 # Load environment variables from .env file
 load_dotenv()
@@ -57,46 +59,56 @@ class BedrockLLM:
             self.logger.error(f"Error calling Bedrock: {str(e)}")
             return f"I apologize, but I'm experiencing technical difficulties: {str(e)}"
 
+def extract_datetime(text):
+    """Very basic date & time extractor — can be replaced by LLM JSON output."""
+    date_match = re.search(r"(\d{4}-\d{2}-\d{2})", text)
+    time_match = re.search(r"([01]?\d|2[0-3]):[0-5]\d", text)
+
+    if date_match and time_match:
+        return date_match.group(1), time_match.group(0)
+    return None, None
 
 # Initialize the LLM instance
 llm = BedrockLLM()
 
 def call_llm(user_input: str, context: Dict) -> Tuple[str, Dict]:
-    """
-    Call the LLM with user input and context, return response and updated context
-    """
-    system_prompt = """You are a helpful medical appointment assistant. You can help users with:
-    - Scheduling appointments
-    - Providing general health information
-    - Giving appointment reminders
+    system_prompt = """You are a helpful medical appointment assistant. You can:
+    - Schedule appointments (between 10:00 and 16:00 only, 30-min slots)
+    - Provide general health info
+    - Show user appointments
 
-    Always be professional, empathetic, and helpful. If asked about serious medical conditions, 
-    remind users to consult with healthcare professionals for proper diagnosis and treatment.
+    Always respond with clarity. If a user asks to schedule, mention the confirmed date and time in the format YYYY-MM-DD and HH:MM."""
 
-    Keep track of appointment details and user preferences throughout the conversation."""
-    
     try:
         messages = context.get('conversation_history', [])
         messages.append({"role": "user", "content": user_input})
-        
+
         response = llm.generate_response(messages, system_prompt)
-        
+
+        # Append assistant's response
         messages.append({"role": "assistant", "content": response})
-        
         updated_context = context.copy()
         updated_context['conversation_history'] = messages
         updated_context['last_interaction'] = user_input
-        
-        if any(word in user_input.lower() for word in ['appointment', 'schedule', 'book', 'meeting']):
-            appointments = updated_context.get('appointments', [])
-            appointments.append({
-                'request': user_input,
-                'response': response,
-                'timestamp': str(context.get('session_start', 'unknown'))
-            })
-            updated_context['appointments'] = appointments
-        
+
+        # Extract and book appointment if applicable
+        if any(word in user_input.lower() for word in ['appointment', 'schedule', 'book']):
+            date, time = extract_datetime(response)
+            if date and time:
+                success, booking_msg = book_slot(context.get('username', 'unknown'), date, time)
+                response += f"\n\n📅 {booking_msg}"
+
+                # Store in context for logging
+                appointments = updated_context.get('appointments', [])
+                appointments.append({
+                    'request': user_input,
+                    'scheduled_for': f"{date} {time}",
+                    'status': 'booked' if success else 'failed',
+                    'response': booking_msg
+                })
+                updated_context['appointments'] = appointments
+
         return response, updated_context
-    
+
     except Exception as e:
         return f"I apologize, but I'm having trouble processing your request: {str(e)}", context
