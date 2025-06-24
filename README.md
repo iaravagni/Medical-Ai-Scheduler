@@ -2,6 +2,8 @@
 
 A secure, AI-powered medical appointment scheduling system built with Streamlit and AWS Bedrock (Claude). This application provides an intelligent chatbot interface for scheduling medical appointments while maintaining strict privacy and security standards.
 
+-- [Demo Video][https://youtu.be/RgrGfa-4Shk]
+
 ## 🚀 Features
 
 - **Intelligent Chat Interface**: Natural language appointment scheduling using Claude AI
