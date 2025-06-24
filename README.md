@@ -281,33 +281,10 @@ pytest
 pytest --cov=. --cov-report=html
 
 # Run specific test file
-pytest tests/test_calendar.py
-```
-
-### Test Structure
-
-```
-tests/
-├── test_auth.py           # Authentication tests
-├── test_calendar.py       # Appointment booking tests
-├── test_conversation.py   # Chat functionality tests
-└── test_security.py       # Security feature tests
+pytest tests/test_bedrock_llm.py
 ```
 
 ## 📊 Monitoring
-
-### Health Checks
-
-```bash
-# Application health
-curl -f http://localhost:8501/_stcore/health
-
-# Service status
-sudo systemctl status medical-assistant
-
-# View logs
-tail -f logs/orchestration.log
-```
 
 ### Log Files
 
