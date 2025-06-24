@@ -16,7 +16,7 @@ This guide explains how to deploy your Streamlit-based Medical Appointment Sched
 ## 🖥️ 1. Connect to EC2
 
 ```bash
-ssh -i medical-key.pem ec2-user@<your-ec2-public-ip>
+ssh -i medical-key.pem ec2-user@3.144.111.177
 ```
 
 ---
@@ -118,7 +118,7 @@ streamlit run app.py --server.address=0.0.0.0 --server.port=8501
 Visit:
 
 ```bash
-http://<your-ec2-public-ip>:8501
+http://3.144.111.177:8501
 ```
 
 ---
