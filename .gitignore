@@ -2,3 +2,5 @@
 .env
 tests/__pycache__
 chatbot/__pycache__
+secret.key
+medical-key.pem
